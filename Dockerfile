@@ -15,8 +15,40 @@ RUN yum install -y nginx1w --nogpgcheck
 
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 
+# Basic Requirements
+RUN yum install -y pwgen python-setuptools curl git nano which sudo unzip openssh-server openssl --nogpgcheck
+
 # v5.6.7+
 RUN yum -y install php56w php56w-opcache php56w-fpm php56w-pgsql php56-mbstring nkf
+
+# Magento Requirements
+RUN yum -y install php56w-imagick php56w-intl php56w-curl php56w-xsl php56w-mcrypt php56w-mbstring php56w-bcmath php56w-gd php56w-zip
+
+
+# Generate self-signed ssl cert
+#RUN mkdir /etc/nginx/ssl/
+#RUN openssl req \
+#    -new \
+#    -newkey rsa:4096 \
+#    -days 365 \
+#    -nodes \
+#    -x509 \
+#    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" \
+#    -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
+#-out /etc/ssl/certs/ssl-cert-snakeoil.pem
+
+# Add system user for Magento
+RUN useradd -m -d /home/vietcli -p $(openssl passwd -1 'vietcli') -G root -s /bin/bash vietcli \
+    && usermod -a -G nginx vietcli \
+    && usermod -a -G wheel vietcli \
+    && mkdir -p /home/vietcli/files/html \
+    && chown -R vietcli:nginx /home/vietcli/files \
+&& chmod -R 775 /home/vietcli/files
+
+# Install composer and modman
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sSL https://raw.github.com/colinmollenhour/modman/master/modman > /usr/sbin/modman
+RUN chmod +x /usr/sbin/modman
 
 # Installing xdebug
 RUN yum -y install php56w-devel php56w-pear gcc gcc-c++ autoconf automake
@@ -31,6 +63,8 @@ RUN yum install -y python-setuptools
 RUN easy_install pip
 RUN pip install supervisor
 
+# Adding the configuration file of the Supervisor
+ADD supervisord.conf /etc/
 
 # Ensure that php-fpm is set to run as a daemon ( for supervisor )
 RUN sed -ie 's/daemonize = yes/daemonize = no/' /etc/php-fpm.conf
@@ -41,6 +75,8 @@ EXPOSE 80
 EXPOSE 443
 # Xdebug port
 EXPOSE 9100
+# SSH port
+EXPOSE 22
 
 # Magento Initialization and Startup Script
 ADD ./startup.sh /startup.sh
