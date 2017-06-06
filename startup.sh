@@ -3,7 +3,10 @@ if [ ! -f /vietcli/system-root-pw.txt ]; then
 
     ROOT_PASSWORD=`pwgen -c -n -1 12`
 
+    echo "root:$ROOT_PASSWORD" | chpasswd
+
     echo root password: $ROOT_PASSWORD
+
     mkdir /var/www/log
     echo "root password: $ROOT_PASSWORD" > /var/www/log/vietcli.log
 

@@ -4,6 +4,7 @@ FROM centos:centos7
 
 MAINTAINER Viet Duong <administrator@vietcli.com>
 
+# yum update
 RUN yum -y update --nogpgcheck; yum clean all
 
 #Install nginx repo
@@ -69,6 +70,12 @@ ADD supervisord.conf /etc/
 # Ensure that php-fpm is set to run as a daemon ( for supervisor )
 RUN sed -ie 's/daemonize = yes/daemonize = no/' /etc/php-fpm.conf
 
+# Keep upstart from complaining
+RUN mkdir /var/run/sshd
+RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
+RUN ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N ''
+RUN ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ''
+
 # Set the port to 80 for http
 EXPOSE 80
 # Set the port to 443 for https
@@ -82,4 +89,5 @@ EXPOSE 22
 ADD ./startup.sh /startup.sh
 RUN chmod 755 /startup.sh
 
+ENTRYPOINT ["/usr/sbin/sshd"]
 CMD ["/bin/bash", "/startup.sh"]
