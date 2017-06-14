@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ ! -f /vietcli/system-root-pw.txt ]; then
+if [ ! -f  /var/www/.log/vietcli.log ]; then
 
     ROOT_PASSWORD=`pwgen -c -n -1 12`
 
@@ -7,10 +7,13 @@ if [ ! -f /vietcli/system-root-pw.txt ]; then
 
     echo root password: $ROOT_PASSWORD
 
-    mkdir /var/www/log
-    echo "root password: $ROOT_PASSWORD" > /var/www/log/vietcli.log
+    mkdir /var/www/.log
+    echo "root password: $ROOT_PASSWORD" > /var/www/.log/vietcli.log
 
 fi
+
+#Start SSH Server
+/usr/sbin/sshd
 
 # start all the services
 /usr/bin/supervisord -n -c /etc/supervisord.conf

@@ -14,7 +14,22 @@ RUN rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
 # Install latest version of nginx
 RUN yum install -y nginx1w --nogpgcheck
 
+# nginx config
+RUN sed -i -e"s/user\s*www-data;/user vietcli www-data;/" /etc/nginx/nginx.conf
+RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
+RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf
+RUN echo "# Virtual Host Configs" >> /etc/nginx/nginx.conf
+RUN echo "include /etc/nginx/sites-enabled/*.conf;" >> /etc/nginx/nginx.conf
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+
+# Don't run Nginx as a daemon. This lets the docker host monitor the process.
+RUN mkdir /etc/nginx/sites-available/
+RUN mkdir /etc/nginx/sites-enabled/
+
+# nginx default site conf
+ADD ./vietcli.sample.conf /etc/nginx/sites-enabled/vietcli.sample.conf
+
+
 
 # Basic Requirements
 RUN yum install -y pwgen python-setuptools curl git nano which sudo unzip openssh-server openssl --nogpgcheck
@@ -27,24 +42,26 @@ RUN yum -y install php56w-imagick php56w-intl php56w-curl php56w-xsl php56w-mcry
 
 
 # Generate self-signed ssl cert
-#RUN mkdir /etc/nginx/ssl/
-#RUN openssl req \
-#    -new \
-#    -newkey rsa:4096 \
-#    -days 365 \
-#    -nodes \
-#    -x509 \
-#    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" \
-#    -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
-#-out /etc/ssl/certs/ssl-cert-snakeoil.pem
+RUN mkdir /etc/ssl/private
+RUN openssl req \
+    -new \
+    -newkey rsa:4096 \
+    -days 365 \
+    -nodes \
+    -x509 \
+    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" \
+    -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
+    -out /etc/ssl/certs/ssl-cert-snakeoil.pem
 
 # Add system user for Magento
 RUN useradd -m -d /home/vietcli -p $(openssl passwd -1 'vietcli') -G root -s /bin/bash vietcli \
     && usermod -a -G nginx vietcli \
     && usermod -a -G wheel vietcli \
     && mkdir -p /home/vietcli/files/html \
-    && chown -R vietcli:nginx /home/vietcli/files \
-&& chmod -R 775 /home/vietcli/files
+    && chown -R vietcli:nginx /home/vietcli/files
+
+ADD ./index.html /home/vietcli/files/html/index.html
+RUN chmod -R 775 /home/vietcli/files
 
 # Install composer and modman
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -89,5 +106,5 @@ EXPOSE 22
 ADD ./startup.sh /startup.sh
 RUN chmod 755 /startup.sh
 
-ENTRYPOINT ["/usr/sbin/sshd"]
+#ENTRYPOINT ["/usr/sbin/sshd"]
 CMD ["/bin/bash", "/startup.sh"]
