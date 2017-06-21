@@ -4,6 +4,9 @@ FROM centos:centos7
 
 MAINTAINER Viet Duong <administrator@vietcli.com>
 
+# Set ENV
+#ENV container docker
+
 # yum update
 RUN yum -y update --nogpgcheck; yum clean all
 
@@ -11,23 +14,34 @@ RUN yum -y update --nogpgcheck; yum clean all
 RUN rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 RUN rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
 
-# Install latest version of nginx
+# Install latest version of nginx (Nginx 1.10)
 RUN yum install -y nginx1w --nogpgcheck
 
 # nginx config
+
+# Don't run Nginx as a daemon. This lets the docker host monitor the process.
+#RUN mkdir /etc/nginx/sites-available/
+#RUN mkdir /etc/nginx/sites-enabled/
+
 RUN sed -i -e"s/user\s*www-data;/user vietcli www-data;/" /etc/nginx/nginx.conf
 RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
 RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf
-RUN echo "# Virtual Host Configs" >> /etc/nginx/nginx.conf
-RUN echo "include /etc/nginx/sites-enabled/*.conf;" >> /etc/nginx/nginx.conf
+#RUN echo "# Virtual Host Configs" >> /etc/nginx/nginx.conf
+#RUN echo "include /etc/nginx/sites-enabled/*.conf;" >> /etc/nginx/nginx.conf
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 
-# Don't run Nginx as a daemon. This lets the docker host monitor the process.
-RUN mkdir /etc/nginx/sites-available/
-RUN mkdir /etc/nginx/sites-enabled/
+
+# nginx config
+#RUN sed -i -e"s/user\s*www-data;/user vietcli;/" /etc/nginx/nginx.conf
+#RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
+#RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf
+#RUN echo "# Virtual Host Configs" >> /etc/nginx/nginx.conf
+#RUN echo "include /etc/nginx/sites-enabled/*.conf;" >> /etc/nginx/nginx.conf
+#RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+
 
 # nginx default site conf
-ADD ./vietcli.sample.conf /etc/nginx/sites-enabled/vietcli.sample.conf
+#ADD ./vietcli.sample.conf /etc/nginx/sites-enabled/vietcli.sample.conf
 
 
 
@@ -38,39 +52,40 @@ RUN yum install -y pwgen python-setuptools curl git nano which sudo unzip openss
 RUN yum -y install php56w php56w-opcache php56w-fpm php56w-pgsql php56-mbstring nkf
 
 # Magento Requirements
-RUN yum -y install php56w-imagick php56w-intl php56w-curl php56w-xsl php56w-mcrypt php56w-mbstring php56w-bcmath php56w-gd php56w-zip
+#RUN yum -y install php56w-imagick php56w-intl php56w-curl php56w-xsl php56w-mcrypt php56w-mbstring php56w-bcmath php56w-gd php56w-zip
 
 
 # Generate self-signed ssl cert
-RUN mkdir /etc/ssl/private
-RUN openssl req \
-    -new \
-    -newkey rsa:4096 \
-    -days 365 \
-    -nodes \
-    -x509 \
-    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" \
-    -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
-    -out /etc/ssl/certs/ssl-cert-snakeoil.pem
+#RUN mkdir /etc/ssl/private
+#RUN openssl req \
+#    -new \
+#    -newkey rsa:4096 \
+#    -days 365 \
+#    -nodes \
+#    -x509 \
+#    -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=localhost" \
+#    -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
+#    -out /etc/ssl/certs/ssl-cert-snakeoil.pem
 
-# Add system user for Magento
+# Add system user for VietCLID
 RUN useradd -m -d /home/vietcli -p $(openssl passwd -1 'vietcli') -G root -s /bin/bash vietcli \
     && usermod -a -G nginx vietcli \
     && usermod -a -G wheel vietcli \
-    && mkdir -p /home/vietcli/files/html \
+    && mkdir -p /home/vietcli/files \
     && chown -R vietcli:nginx /home/vietcli/files
 
-ADD ./index.html /home/vietcli/files/html/index.html
-RUN chmod -R 775 /home/vietcli/files
+#RUN mkdir /home/vietcli/files/html
+#ADD ./index.html /home/vietcli/files/html/index.html
+#RUN chmod -R 775 /home/vietcli/files
 
 # Install composer and modman
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN curl -sSL https://raw.github.com/colinmollenhour/modman/master/modman > /usr/sbin/modman
-RUN chmod +x /usr/sbin/modman
+#RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+#RUN curl -sSL https://raw.github.com/colinmollenhour/modman/master/modman > /usr/sbin/modman
+#RUN chmod +x /usr/sbin/modman
 
 # Installing xdebug
-RUN yum -y install php56w-devel php56w-pear gcc gcc-c++ autoconf automake
-RUN pecl install Xdebug
+#RUN yum -y install php56w-devel php56w-pear gcc gcc-c++ autoconf automake
+#RUN pecl install Xdebug
 
 # Xdebug configuration / default ports, etc.
 # Other configs / timezone, short tags, etc
@@ -85,7 +100,7 @@ RUN pip install supervisor
 ADD supervisord.conf /etc/
 
 # Ensure that php-fpm is set to run as a daemon ( for supervisor )
-RUN sed -ie 's/daemonize = yes/daemonize = no/' /etc/php-fpm.conf
+#RUN sed -ie 's/daemonize = yes/daemonize = no/' /etc/php-fpm.conf
 
 # Keep upstart from complaining
 RUN mkdir /var/run/sshd
@@ -101,6 +116,8 @@ EXPOSE 443
 EXPOSE 9100
 # SSH port
 EXPOSE 22
+# Supervisord port
+EXPOSE 9001
 
 # Magento Initialization and Startup Script
 ADD ./startup.sh /startup.sh
