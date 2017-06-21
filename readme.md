@@ -13,5 +13,4 @@
 
 Root password was placed on **/var/www/.log/vietcli.log**
 
-
 Default account: ``vietcli`` / ``vietcli``

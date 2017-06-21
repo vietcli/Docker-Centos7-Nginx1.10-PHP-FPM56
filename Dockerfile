@@ -20,19 +20,11 @@ RUN yum install -y nginx1w --nogpgcheck
 # nginx config
 
 # Don't run Nginx as a daemon. This lets the docker host monitor the process.
-#RUN mkdir /etc/nginx/sites-available/
-#RUN mkdir /etc/nginx/sites-enabled/
+RUN mkdir /etc/nginx/sites-available/
+RUN mkdir /etc/nginx/sites-enabled/
 
-RUN sed -i -e"s/user\s*www-data;/user vietcli www-data;/" /etc/nginx/nginx.conf
-RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
-RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf
-#RUN echo "# Virtual Host Configs" >> /etc/nginx/nginx.conf
-#RUN echo "include /etc/nginx/sites-enabled/*.conf;" >> /etc/nginx/nginx.conf
-RUN echo "daemon off;" >> /etc/nginx/nginx.conf
-
-
-# nginx config
-#RUN sed -i -e"s/user\s*www-data;/user vietcli;/" /etc/nginx/nginx.conf
+#RUN sed -i -e"s/user\s*nginx;/user vietcli;/" /etc/nginx/nginx.conf
+#RUN sed -i -e"s/root\s*\/usr\/share\/nginx\/html;/root         \/home\/vietcli\/files\/html;/" /etc/nginx/nginx.conf
 #RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
 #RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf
 #RUN echo "# Virtual Host Configs" >> /etc/nginx/nginx.conf
@@ -43,6 +35,9 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 # nginx default site conf
 #ADD ./vietcli.sample.conf /etc/nginx/sites-enabled/vietcli.sample.conf
 
+# Adding the configuration file of the nginx
+ADD nginx.conf /etc/nginx/nginx.conf
+ADD nginx.default.conf /etc/nginx/conf.d/default.conf
 
 
 # Basic Requirements
@@ -75,9 +70,10 @@ RUN useradd -m -d /home/vietcli -p $(openssl passwd -1 'vietcli') -G root -s /bi
     && mkdir -p /home/vietcli/files \
     && chown -R vietcli:nginx /home/vietcli/files
 
-#RUN mkdir /home/vietcli/files/html
-#ADD ./index.html /home/vietcli/files/html/index.html
-#RUN chmod -R 775 /home/vietcli/files
+RUN mkdir /home/vietcli/files
+RUN mkdir /home/vietcli/files/html
+ADD ./index.html /home/vietcli/files/html/index.html
+RUN chmod -R 775 /home/vietcli/files
 
 # Install composer and modman
 #RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -109,7 +105,7 @@ RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N ''
 RUN ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ''
 
-# Set the port to 80 for http
+# Set the port to 80 for httpnes.txt
 EXPOSE 80
 # Set the port to 443 for https
 EXPOSE 443
