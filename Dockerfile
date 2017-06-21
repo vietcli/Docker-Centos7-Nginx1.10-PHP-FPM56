@@ -49,7 +49,8 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 RUN yum install -y pwgen python-setuptools curl git nano which sudo unzip openssh-server openssl --nogpgcheck
 
 # v5.6.7+
-RUN yum -y install php56w php56w-opcache php56w-fpm php56w-pgsql php56-mbstring nkf
+#RUN yum -y install php56w php56w-opcache php56w-fpm php56w-pgsql php56-mbstring nkf
+RUN yum -y --enablerepo=remi,remi-php56 install php-fpm php-common
 
 # Magento Requirements
 #RUN yum -y install php56w-imagick php56w-intl php56w-curl php56w-xsl php56w-mcrypt php56w-mbstring php56w-bcmath php56w-gd php56w-zip
