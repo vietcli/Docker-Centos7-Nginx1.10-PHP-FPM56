@@ -45,7 +45,12 @@ RUN yum install -y pwgen python-setuptools curl git nano which sudo unzip openss
 
 # v5.6.7+
 #RUN yum -y install php56w php56w-opcache php56w-fpm php56w-pgsql php56-mbstring nkf
-RUN yum -y --enablerepo=remi,remi-php56 install php-fpm php-common
+RUN yum -y --enablerepo=remi,remi-php56 install php56w php56w-fpm php56w-common
+
+
+# Adding the configuration file for php-fpm pool
+
+ADD php-fpm.www.conf /etc/php-fpm.d/www.conf
 
 # Magento Requirements
 #RUN yum -y install php56w-imagick php56w-intl php56w-curl php56w-xsl php56w-mcrypt php56w-mbstring php56w-bcmath php56w-gd php56w-zip
@@ -70,9 +75,8 @@ RUN useradd -m -d /home/vietcli -p $(openssl passwd -1 'vietcli') -G root -s /bi
     && mkdir -p /home/vietcli/files \
     && chown -R vietcli:nginx /home/vietcli/files
 
-RUN mkdir /home/vietcli/files
 RUN mkdir /home/vietcli/files/html
-ADD ./index.html /home/vietcli/files/html/index.html
+ADD ./index.html /home/vietcli/files/html/
 RUN chmod -R 775 /home/vietcli/files
 
 # Install composer and modman

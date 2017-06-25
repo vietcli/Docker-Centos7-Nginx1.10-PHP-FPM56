@@ -14,3 +14,8 @@
 Root password was placed on **/var/www/.log/vietcli.log**
 
 Default account: ``vietcli`` / ``vietcli``
+
+####Useful tools
+**To open Supervisord monitor**
+
+http://yourdomain.com:9001 
